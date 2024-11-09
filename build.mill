@@ -1,0 +1,54 @@
+package build
+import $ivy.`com.goyeau::mill-scalafix::0.4.2`
+import com.goyeau.mill.scalafix.ScalafixModule
+
+import mill._, scalalib._
+
+trait KafkaDemoModule extends ScalaModule with ScalafixModule {
+  def scalaVersion = "3.5.2"
+  def ivyDeps = Agg(
+    ivy"org.typelevel::cats-effect:3.5.5",
+    ivy"org.typelevel::log4cats-core:2.7.0",
+    ivy"org.typelevel::log4cats-slf4j:2.7.0",
+    ivy"ch.qos.logback:logback-classic:1.5.12",
+    ivy"com.github.fd4s::fs2-kafka:3.5.1"
+  )
+
+  override def scalacOptions: T[Seq[String]] = 
+    Seq(
+      "-deprecation",
+      "-encoding",
+      "UTF-8",
+      "-feature",
+      "-unchecked",
+      "-Wunused:implicits",
+      "-Wunused:explicits",
+      "-Wunused:imports",
+      "-Wunused:locals",
+      "-Wunused:params",
+      "-Wunused:privates",
+      "-Wvalue-discard",
+      "-source:future",
+      "-Wnonunit-statement",
+      "-Werror"
+    )
+}
+
+object kafkacommon extends KafkaDemoModule {
+  def startEnv() = Task.Command {
+    os.proc("docker-compose", "-f", "local_dev/docker-compose.yml", "up", "-d").call(cwd = Task.workspace)
+  }
+
+  def stopEnv() = Task.Command {
+    os.proc("docker-compose", "-f", "local_dev/docker-compose.yml", "down").call(cwd = Task.workspace)
+  }
+
+}
+
+object kafkaproducer extends KafkaDemoModule {
+  override def moduleDeps: Seq[JavaModule] = Seq(kafkacommon)
+}
+
+object kafkaconsumer extends KafkaDemoModule {
+  override def moduleDeps: Seq[JavaModule] = Seq(kafkacommon)
+}
