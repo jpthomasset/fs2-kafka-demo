@@ -23,7 +23,7 @@ object Main extends IOApp.Simple {
 
   val run: IO[Unit] =
     Utils.longStream
-      .metered(1000.millisecond)
+      .metered(1.second)
       .map { sid => ProducerRecord("topic-2p", s"key-$sid", s"value-$sid") }
       .evalTap(r => logger.info(s"Producing: (${r.key}, ${r.value})"))
       .chunks
